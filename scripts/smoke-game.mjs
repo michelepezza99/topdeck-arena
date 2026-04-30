@@ -46,7 +46,7 @@ try {
   assert.equal(state.sessionStats.rounds, 1);
   assert.equal(state.deckCount, 50);
 
-  await page.getByRole("button", { name: "Next Round" }).click();
+  await page.getByRole("button", { name: "Deal Next Round" }).click();
   await page.waitForTimeout(150);
 
   state = await readState(page);
@@ -62,7 +62,7 @@ try {
   assert.equal(state.sessionStats.rounds, 2);
   assert.ok(state.playerCard);
 
-  await page.getByRole("button", { name: "Finish Game" }).click();
+  await page.getByRole("button", { name: "End Session" }).click();
   await page.waitForTimeout(150);
   await screenshot(page, "end");
 

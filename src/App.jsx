@@ -8,6 +8,96 @@ const CONTACT_EMAIL = "michelepezza99@gmail.com";
 
 const STARTING_COINS = STARTING_BALANCE;
 const MIN_BET = 1;
+const SITE_TAGLINE =
+  "A refined high-low card table for fast prediction rounds with virtual coins only.";
+const SAFETY_TITLE = "Entertainment-only play";
+const SAFETY_COPY =
+  "Topdeck Arena uses virtual coins only. It does not accept deposits, process withdrawals, award prizes, or offer anything with real-money value.";
+
+const START_HIGHLIGHTS = [
+  {
+    label: "Starting Stack",
+    value: STARTING_COINS,
+    detail: "virtual coins",
+  },
+  {
+    label: "Round Format",
+    value: "High-Low",
+    detail: "one clean call",
+  },
+  {
+    label: "Real-Money Risk",
+    value: "None",
+    detail: "no deposits or prizes",
+  },
+];
+
+const TABLE_RULES = [
+  "Start each session with 500 virtual coins.",
+  "Choose a virtual stake before each reveal.",
+  "Call whether your card will be higher or lower than the dealer's exposed card.",
+  "Correct calls add your stake; missed calls deduct it.",
+  "Matching card values are a push, so your stake is returned.",
+  "Finish whenever you want, or continue until your virtual stack reaches zero.",
+];
+
+const INFO_CONTENT = {
+  privacy: {
+    eyebrow: "Privacy",
+    title: "Privacy Policy",
+    lead:
+      "Topdeck Arena is designed as a lightweight browser game with minimal data handling.",
+    sections: [
+      {
+        title: "Information We Do Not Collect",
+        body: [
+          "The game does not require an account, personal profile, payment details, or identity verification.",
+          "It does not collect deposits, process withdrawals, or request financial information.",
+        ],
+      },
+      {
+        title: "Local Gameplay Data",
+        body: [
+          "Your best score and total sessions can be saved in your browser's local storage so the interface can remember your progress on this device.",
+          "That local data remains on your device unless you clear browser storage or reset it inside the game.",
+        ],
+      },
+      {
+        title: "Future Services",
+        body: [
+          "If analytics, advertising, cookies, accounts, or server-side features are added later, this policy should be updated before those services go live.",
+        ],
+      },
+    ],
+  },
+  terms: {
+    eyebrow: "Terms",
+    title: "Terms of Use",
+    lead:
+      "Please use Topdeck Arena as a free entertainment experience, not as a gambling or financial product.",
+    sections: [
+      {
+        title: "Virtual Coins Only",
+        body: [
+          "Virtual coins have no cash value and cannot be purchased, sold, withdrawn, redeemed, transferred, or exchanged for money, goods, services, or prizes.",
+        ],
+      },
+      {
+        title: "No Real-Money Gambling",
+        body: [
+          "Topdeck Arena does not offer betting services, casino services, financial rewards, paid entry, deposits, withdrawals, or prize distribution.",
+          "Outcomes are generated for entertainment inside a free prediction game.",
+        ],
+      },
+      {
+        title: "Player Responsibility",
+        body: [
+          "By using the site, you understand that the game is a no-stakes experience and that virtual results do not represent financial performance or skill certification.",
+        ],
+      },
+    ],
+  },
+};
 
 const STORAGE_KEYS = {
   bestCoins: "topdeck-arena-best-coins-static-v1",
@@ -22,6 +112,12 @@ function formatCard(card) {
   if (!card) return "";
 
   return `${card.rank ?? card.label}${card.suit}`;
+}
+
+function formatSignedCoins(amount) {
+  if (amount > 0) return `+${amount}`;
+  if (amount < 0) return String(amount);
+  return "0";
 }
 
 function createSessionStats() {
@@ -60,7 +156,7 @@ function TopNav({ onGoHome, onOpenPage }) {
           type="button"
           className="brand-button"
           onClick={() => handleNavAction(onGoHome)}
-          aria-label="Go to home page"
+          aria-label="Go to Topdeck Arena start screen"
         >
           {SITE_NAME}
         </button>
@@ -80,7 +176,7 @@ function TopNav({ onGoHome, onOpenPage }) {
           aria-label="Main navigation"
         >
           <button type="button" onClick={() => handleNavAction(onGoHome)}>
-            Home
+            Play
           </button>
 
           <button
@@ -149,13 +245,22 @@ function Footer() {
       <div>
         <strong>{SITE_NAME}</strong>
         <p>
-          Free virtual card prediction game. No real money, no deposits, no
-          withdrawals, and no prizes.
+          Free virtual high-low card game. No accounts, deposits, withdrawals,
+          prizes, or real-money value.
         </p>
       </div>
 
       <span className="footer-copy">&copy; {year} {SITE_NAME}</span>
     </footer>
+  );
+}
+
+function SafetyNotice({ compact = false }) {
+  return (
+    <div className={`disclaimer-box ${compact ? "compact" : ""}`}>
+      <strong>{SAFETY_TITLE}</strong>
+      <span>{SAFETY_COPY}</span>
+    </div>
   );
 }
 
@@ -188,23 +293,26 @@ function StartScreen({ bestCoins, gamesPlayed, onStart, onOpenPage }) {
     <main className="app page-shell">
       <section className="start-screen">
         <div className="start-content">
-          <p className="eyebrow">Free Card Prediction Game</p>
+          <p className="eyebrow">No-Stakes Card Arena</p>
 
           <h1>{SITE_NAME}</h1>
 
           <p className="subtitle">
-            Predict whether your card will be higher or lower than the dealer's
-            card. Play with virtual coins only.
+            {SITE_TAGLINE} Read the dealer's card, choose your stake, and make
+            a sharp call without any real-money risk.
           </p>
 
-          <div className="disclaimer-box">
-            <strong>Free-to-play disclaimer:</strong>
-            <span>
-              This game uses virtual coins only. It does not involve real-money
-              gambling, deposits, withdrawals, cash prizes, or any form of
-              financial reward.
-            </span>
+          <div className="start-highlights" aria-label="Game summary">
+            {START_HIGHLIGHTS.map((item) => (
+              <div className="highlight-card" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <small>{item.detail}</small>
+              </div>
+            ))}
           </div>
+
+          <SafetyNotice />
 
           <div className="start-actions">
             <button
@@ -220,7 +328,7 @@ function StartScreen({ bestCoins, gamesPlayed, onStart, onOpenPage }) {
               type="button"
               onClick={() => onOpenPage("terms")}
             >
-              Read Rules
+              View Rules
             </button>
           </div>
         </div>
@@ -229,14 +337,12 @@ function StartScreen({ bestCoins, gamesPlayed, onStart, onOpenPage }) {
           <TablePreview />
 
           <div className="start-card">
-            <h2>How it works</h2>
+            <h2>Table Rules</h2>
 
             <ol>
-              <li>You start with 500 virtual coins.</li>
-              <li>The dealer's card is shown first.</li>
-              <li>You choose Higher or Lower.</li>
-              <li>If you guess correctly, you win the amount you selected.</li>
-              <li>If the cards have the same value, your coins are returned.</li>
+              {TABLE_RULES.slice(0, 5).map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
             </ol>
 
             <div className="mini-stats">
@@ -250,6 +356,11 @@ function StartScreen({ bestCoins, gamesPlayed, onStart, onOpenPage }) {
                 <strong>{gamesPlayed}</strong>
               </div>
             </div>
+
+            <p className="start-note">
+              Scores are stored locally in this browser unless you clear site
+              data or reset your best score.
+            </p>
           </div>
         </div>
       </section>
@@ -261,7 +372,6 @@ function EndScreen({
   finalCoins,
   roundsPlayed,
   bestCoins,
-  gamesPlayed,
   sessionStats,
   onRestart,
   onHome,
@@ -270,25 +380,33 @@ function EndScreen({
     sessionStats.rounds > 0
       ? Math.round((sessionStats.wins / sessionStats.rounds) * 100)
       : 0;
+  const netCoins = finalCoins - STARTING_COINS;
+  const resultTone =
+    netCoins > 0 ? "You closed ahead." : netCoins < 0 ? "You closed down." : "You closed even.";
 
   return (
     <main className="app page-shell">
       <section className="end-screen">
         <div className="end-card">
-          <p className="eyebrow">Game Finished</p>
+          <p className="eyebrow">Session Complete</p>
 
-          <h1>Your Results</h1>
+          <h1>Session Summary</h1>
 
           <p className="subtitle">
-            You finished this session with <strong>{finalCoins}</strong> virtual
-            coins after <strong>{roundsPlayed}</strong> round
+            {resultTone} Final stack: <strong>{finalCoins}</strong> virtual
+            coins across <strong>{roundsPlayed}</strong> round
             {roundsPlayed === 1 ? "" : "s"}.
           </p>
 
           <div className="result-grid">
             <div>
-              <span>Final Coins</span>
+              <span>Final Stack</span>
               <strong>{finalCoins}</strong>
+            </div>
+
+            <div>
+              <span>Net Result</span>
+              <strong>{formatSignedCoins(netCoins)}</strong>
             </div>
 
             <div>
@@ -297,18 +415,13 @@ function EndScreen({
             </div>
 
             <div>
-              <span>Games Played</span>
-              <strong>{gamesPlayed}</strong>
+              <span>Rounds</span>
+              <strong>{roundsPlayed}</strong>
             </div>
 
             <div>
               <span>Wins</span>
               <strong>{sessionStats.wins}</strong>
-            </div>
-
-            <div>
-              <span>Losses</span>
-              <strong>{sessionStats.losses}</strong>
             </div>
 
             <div>
@@ -336,8 +449,8 @@ function EndScreen({
           </div>
 
           <p className="small-note">
-            Reminder: this is a free virtual game. Coins have no real-money
-            value and cannot be exchanged for prizes.
+            Results are for entertainment only. Virtual coins cannot be
+            exchanged for cash, prizes, goods, or services.
           </p>
         </div>
       </section>
@@ -346,64 +459,69 @@ function EndScreen({
 }
 
 function InfoPage({ page, onBack }) {
-  const content = {
-    privacy: {
-      title: "Privacy Policy",
-      body: [
-        `${SITE_NAME} is a simple free-to-play browser game.`,
-        "At this stage, the game does not require registration, does not ask for personal information, and does not process payments.",
-        "The game may store basic gameplay data locally in your browser, such as your best score and number of games played. This data stays on your device unless you clear your browser storage.",
-        "If advertising, analytics, or cookies are added in the future, this policy should be updated before publication.",
-      ],
-    },
-    terms: {
-      title: "Terms of Use",
-      body: [
-        `${SITE_NAME} is provided for entertainment purposes only.`,
-        "The game uses virtual coins only. Virtual coins have no real-world value and cannot be deposited, withdrawn, sold, redeemed, or exchanged for money or prizes.",
-        "This website does not offer real-money gambling, financial rewards, betting services, or gambling-related transactions.",
-        "By using the game, you understand that it is a free prediction game based on random card outcomes.",
-      ],
-    },
-  };
-
-  const selected = content[page];
+  const selected = INFO_CONTENT[page];
 
   return (
     <main className="app page-shell">
       <section className="info-page">
         <button className="back-button" type="button" onClick={onBack}>
-          Back
+          Back to Play
         </button>
-
-        <p className="eyebrow">{SITE_NAME}</p>
 
         {page === "contact" ? (
           <>
-            <h1>Contact</h1>
+            <p className="eyebrow">Contact</p>
 
-            <div className="info-card">
-              <p>
-                For questions, feedback, or business inquiries, you can contact
-                me at:
-              </p>
+            <h1>Contact Topdeck Arena</h1>
 
-              <p>
+            <p className="info-lead">
+              Questions, feedback, corrections, and business inquiries can be
+              sent directly by email.
+            </p>
+
+            <div className="info-card contact-card">
+              <div className="contact-row">
+                <span>Email</span>
                 <a className="contact-link" href={`mailto:${CONTACT_EMAIL}`}>
                   {CONTACT_EMAIL}
                 </a>
-              </p>
+              </div>
 
-              <p>I will do my best to reply as soon as possible.</p>
+              <div className="contact-grid">
+                <div>
+                  <span>Best For</span>
+                  <strong>Support and feedback</strong>
+                </div>
+
+                <div>
+                  <span>Scope</span>
+                  <strong>Free virtual gameplay only</strong>
+                </div>
+              </div>
+
+              <p>
+                Please do not send financial information. Topdeck Arena does
+                not handle deposits, withdrawals, or real-money transactions.
+              </p>
             </div>
           </>
         ) : (
           <>
+            <p className="eyebrow">{selected.eyebrow}</p>
+
             <h1>{selected.title}</h1>
 
-            <div className="info-card">
-              {selected.body.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
+            <p className="info-lead">{selected.lead}</p>
+
+            <div className="info-card info-sections">
+              {selected.sections.map((section) => (
+                <section className="policy-section" key={section.title}>
+                  <h2>{section.title}</h2>
+
+                  {section.body.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </section>
               ))}
             </div>
           </>
@@ -436,33 +554,31 @@ function GameScreen({
   onFinish,
   onResetBest,
 }) {
+  const sessionWinRate =
+    sessionStats.rounds > 0
+      ? Math.round((sessionStats.wins / sessionStats.rounds) * 100)
+      : 0;
+  const netCoins = coins - STARTING_COINS;
+
   return (
     <main className="app page-shell">
       <section className="hero game-hero">
         <div>
-          <p className="eyebrow">Free Card Prediction Game</p>
+          <p className="eyebrow">Current Table</p>
 
           <h1>{SITE_NAME}</h1>
 
           <p className="subtitle">
-            Predict whether your card will be higher or lower than the dealer's
-            card. Play with virtual coins only. No real money, no deposits, no
-            withdrawals, and no prizes.
+            Read the dealer's exposed card, set a virtual stake, and call the
+            next card higher or lower. Every session stays strictly no-stakes.
           </p>
 
-          <div className="disclaimer-box">
-            <strong>Free-to-play disclaimer:</strong>
-            <span>
-              This game uses virtual coins only. It does not involve real-money
-              gambling, deposits, withdrawals, cash prizes, or any form of
-              financial reward.
-            </span>
-          </div>
+          <SafetyNotice compact />
         </div>
 
         <div className="stats-panel">
           <div>
-            <span>Coins</span>
+            <span>Stack</span>
             <strong>{coins}</strong>
           </div>
 
@@ -481,8 +597,8 @@ function GameScreen({
       <section className="game-layout">
         <div className="game-board">
           <div className="table-badge">
-            <span>Dealer shows one card</span>
-            <strong>Pick the next move</strong>
+            <span>Dealer card exposed</span>
+            <strong>Make the call</strong>
           </div>
 
           <div className="cards-area">
@@ -496,7 +612,7 @@ function GameScreen({
 
           <div className="controls">
             <div className="bet-panel">
-              <label htmlFor="bet">Bet Amount</label>
+              <label htmlFor="bet">Virtual Stake</label>
 
               <input
                 id="bet"
@@ -567,7 +683,7 @@ function GameScreen({
                     disabled={!validBet}
                   >
                     <span>Higher</span>
-                    <small>Potential profit: +{bet}</small>
+                    <small>Win +{bet} coins</small>
                   </button>
 
                   <button
@@ -577,7 +693,7 @@ function GameScreen({
                     disabled={!validBet}
                   >
                     <span>Lower</span>
-                    <small>Potential profit: +{bet}</small>
+                    <small>Win +{bet} coins</small>
                   </button>
                 </>
               ) : (
@@ -586,7 +702,7 @@ function GameScreen({
                   type="button"
                   onClick={onNextRound}
                 >
-                  Next Round
+                  Deal Next Round
                 </button>
               )}
             </div>
@@ -595,26 +711,29 @@ function GameScreen({
 
         <aside className="side-panel">
           <div className="rules-card">
-            <h2>Rules</h2>
+            <h2>Table Rules</h2>
 
             <ul>
-              <li>This is a free prediction game with virtual coins only.</li>
-              <li>You start with 500 virtual coins.</li>
-              <li>Choose how many coins to play.</li>
-              <li>
-                Guess if your card will be higher or lower than the dealer's
-                card.
-              </li>
-              <li>If you guess correctly, you win the amount you selected.</li>
-              <li>If both cards have the same value, your coins are returned.</li>
-              <li>If you reach 0 coins, the game ends.</li>
+              {TABLE_RULES.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
             </ul>
           </div>
 
           <div className="session-card">
-            <h2>Session</h2>
+            <h2>Session Dashboard</h2>
 
             <div className="session-grid">
+              <div>
+                <span>Win Rate</span>
+                <strong>{sessionWinRate}%</strong>
+              </div>
+
+              <div>
+                <span>Net</span>
+                <strong>{formatSignedCoins(netCoins)}</strong>
+              </div>
+
               <div>
                 <span>Wins</span>
                 <strong>{sessionStats.wins}</strong>
@@ -648,10 +767,12 @@ function GameScreen({
           </div>
 
           <div className="history-card">
-            <h2>Recent Rounds</h2>
+            <h2>Round Log</h2>
 
             {history.length === 0 ? (
-              <p className="empty-history">No rounds played yet.</p>
+              <p className="empty-history">
+                No completed rounds yet. Your latest calls will appear here.
+              </p>
             ) : (
               <div className="history-list">
                 {history.map((item) => (
@@ -659,13 +780,13 @@ function GameScreen({
                     <div>
                       <strong>Round {item.round}</strong>
                       <span>
-                        {item.choice} / Coins {item.bet}
+                        {item.choice} call / {item.bet} coins
                       </span>
                     </div>
 
                     <div className="history-result">
                       <span>
-                        {item.dealer} to {item.player}
+                        {item.dealer} vs {item.player}
                       </span>
 
                       <strong className={item.result.toLowerCase()}>
@@ -681,11 +802,11 @@ function GameScreen({
           </div>
 
           <button className="ghost-button" type="button" onClick={onFinish}>
-            Finish Game
+            End Session
           </button>
 
           <button className="ghost-button" type="button" onClick={onRestart}>
-            Restart Game
+            Restart Session
           </button>
 
           <button className="text-button" type="button" onClick={onResetBest}>
@@ -706,7 +827,7 @@ export default function App() {
   const [bet, setBet] = useState(50);
   const [playerCard, setPlayerCard] = useState(null);
   const [message, setMessage] = useState(
-    "Choose your coins and predict Higher or Lower."
+    "Set your virtual stake, then call Higher or Lower."
   );
   const [roundResult, setRoundResult] = useState(null);
   const [history, setHistory] = useState([]);
@@ -795,7 +916,7 @@ export default function App() {
     setCoins(STARTING_COINS);
     setBet(50);
     setPlayerCard(null);
-    setMessage("Choose your coins and predict Higher or Lower.");
+    setMessage("Set your virtual stake, then call Higher or Lower.");
     setRoundResult(null);
     setHistory([]);
     setSessionStats(createSessionStats());
@@ -880,15 +1001,15 @@ export default function App() {
     if (outcome === OUTCOMES.TIE) {
       result = "Tie";
       coinsChange = 0;
-      resultMessage = "Tie. Your coins have been returned.";
+      resultMessage = "Push. The card values matched, so your stake is returned.";
     } else if (outcome === OUTCOMES.WIN) {
       result = "Win";
       coinsChange = Number(bet);
-      resultMessage = `You won ${bet} virtual coins.`;
+      resultMessage = `Correct call. You gained ${bet} virtual coins.`;
     } else {
       result = "Loss";
       coinsChange = -Number(bet);
-      resultMessage = `You lost ${bet} virtual coins.`;
+      resultMessage = `Missed call. ${bet} virtual coins were deducted.`;
     }
 
     const updatedCoins = Math.max(coins + coinsChange, 0);
@@ -947,7 +1068,7 @@ export default function App() {
     setPlayerCard(null);
     setRoundResult(null);
     setRoundNumber((current) => current + 1);
-    setMessage("Choose your coins and predict Higher or Lower.");
+    setMessage("Set your virtual stake, then call Higher or Lower.");
     setBet((currentBet) => Math.min(currentBet, coins));
   }
 
@@ -974,7 +1095,6 @@ export default function App() {
           finalCoins={finalCoins}
           roundsPlayed={finalRounds}
           bestCoins={bestCoins}
-          gamesPlayed={gamesPlayed}
           sessionStats={finalStats}
           onRestart={restartGame}
           onHome={goHome}
