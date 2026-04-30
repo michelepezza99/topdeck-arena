@@ -154,8 +154,32 @@ function Footer() {
         </p>
       </div>
 
-      <span className="footer-copy">© {year} {SITE_NAME}</span>
+      <span className="footer-copy">&copy; {year} {SITE_NAME}</span>
     </footer>
+  );
+}
+
+function TablePreview() {
+  return (
+    <div className="table-preview" aria-hidden="true">
+      <div className="preview-felt">
+        <div className="preview-deck">
+          <span>A</span>
+          <span>&spades;</span>
+        </div>
+
+        <div className="preview-card red">
+          <span>Q</span>
+          <span>&hearts;</span>
+        </div>
+
+        <div className="chip-stack">
+          <i />
+          <i />
+          <i />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -201,26 +225,30 @@ function StartScreen({ bestCoins, gamesPlayed, onStart, onOpenPage }) {
           </div>
         </div>
 
-        <div className="start-card">
-          <h2>How it works</h2>
+        <div className="start-side">
+          <TablePreview />
 
-          <ol>
-            <li>You start with 500 virtual coins.</li>
-            <li>The dealer's card is shown first.</li>
-            <li>You choose Higher or Lower.</li>
-            <li>If you guess correctly, you win the amount you selected.</li>
-            <li>If the cards have the same value, your coins are returned.</li>
-          </ol>
+          <div className="start-card">
+            <h2>How it works</h2>
 
-          <div className="mini-stats">
-            <div>
-              <span>Best Score</span>
-              <strong>{bestCoins}</strong>
-            </div>
+            <ol>
+              <li>You start with 500 virtual coins.</li>
+              <li>The dealer's card is shown first.</li>
+              <li>You choose Higher or Lower.</li>
+              <li>If you guess correctly, you win the amount you selected.</li>
+              <li>If the cards have the same value, your coins are returned.</li>
+            </ol>
 
-            <div>
-              <span>Games Played</span>
-              <strong>{gamesPlayed}</strong>
+            <div className="mini-stats">
+              <div>
+                <span>Best Score</span>
+                <strong>{bestCoins}</strong>
+              </div>
+
+              <div>
+                <span>Games Played</span>
+                <strong>{gamesPlayed}</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -345,7 +373,7 @@ function InfoPage({ page, onBack }) {
     <main className="app page-shell">
       <section className="info-page">
         <button className="back-button" type="button" onClick={onBack}>
-          ← Back
+          Back
         </button>
 
         <p className="eyebrow">{SITE_NAME}</p>
@@ -410,7 +438,7 @@ function GameScreen({
 }) {
   return (
     <main className="app page-shell">
-      <section className="hero">
+      <section className="hero game-hero">
         <div>
           <p className="eyebrow">Free Card Prediction Game</p>
 
@@ -452,6 +480,11 @@ function GameScreen({
 
       <section className="game-layout">
         <div className="game-board">
+          <div className="table-badge">
+            <span>Dealer shows one card</span>
+            <strong>Pick the next move</strong>
+          </div>
+
           <div className="cards-area">
             <Card card={dealerCard} label="Dealer Card" />
             <Card card={playerCard} hidden={!playerCard} label="Your Card" />
@@ -626,13 +659,13 @@ function GameScreen({
                     <div>
                       <strong>Round {item.round}</strong>
                       <span>
-                        {item.choice} · Coins {item.bet}
+                        {item.choice} / Coins {item.bet}
                       </span>
                     </div>
 
                     <div className="history-result">
                       <span>
-                        {item.dealer} → {item.player}
+                        {item.dealer} to {item.player}
                       </span>
 
                       <strong className={item.result.toLowerCase()}>
