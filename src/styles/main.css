@@ -41,6 +41,13 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 3px;
+}
+
 button:disabled,
 input:disabled {
   cursor: not-allowed;
@@ -550,12 +557,14 @@ h2 {
 }
 
 .rules-card,
-.history-card {
+.history-card,
+.session-card {
   padding: 24px;
 }
 
 .rules-card h2,
-.history-card h2 {
+.history-card h2,
+.session-card h2 {
   margin: 0 0 14px;
 }
 
@@ -573,6 +582,35 @@ h2 {
 .empty-history {
   margin: 0;
   color: #aeb6cc;
+}
+
+.session-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.session-grid div {
+  min-width: 0;
+  padding: 13px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.session-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: #aeb6cc;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.session-grid strong {
+  display: block;
+  color: #ffffff;
+  font-size: 1.18rem;
 }
 
 .history-list {
@@ -1026,6 +1064,7 @@ h2 {
 
   .rules-card,
   .history-card,
+  .session-card,
   .start-card,
   .end-card,
   .info-card {
@@ -1079,6 +1118,10 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .session-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .info-page {
     align-content: start;
   }
@@ -1115,5 +1158,20 @@ h2 {
 
   .stats-panel strong {
     font-size: 1.05rem;
+  }
+
+  .session-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

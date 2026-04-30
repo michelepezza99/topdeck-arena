@@ -8,6 +8,7 @@
 import { createShuffledDeck, drawCard, ensurePlayableDeck } from "./deck.js";
 
 export const STARTING_BALANCE = 500;
+export const DEFAULT_MIN_BET = 1;
 
 export const PHASES = {
   BETTING: "betting",
@@ -51,25 +52,25 @@ export function createInitialState() {
   };
 }
 
-export function validateBet(amount, balance) {
+export function validateBet(amount, balance, minimum = DEFAULT_MIN_BET) {
   if (!Number.isFinite(amount) || !Number.isInteger(amount)) {
     return {
       valid: false,
-      error: "La puntata deve essere un numero intero.",
+      error: "Bet amount must be a whole number.",
     };
   }
 
-  if (amount < 1) {
+  if (amount < minimum) {
     return {
       valid: false,
-      error: "La puntata minima è 1 coin.",
+      error: `The minimum bet is ${minimum} coin${minimum === 1 ? "" : "s"}.`,
     };
   }
 
   if (amount > balance) {
     return {
       valid: false,
-      error: `Non puoi puntare più di ${balance} coins.`,
+      error: `Bet amount must be no more than ${balance} coins.`,
     };
   }
 

@@ -1,61 +1,48 @@
 import { useEffect, useMemo, useState } from "react";
+import { OUTCOMES, resolveOutcome, STARTING_BALANCE, validateBet } from "./logic/gameLogic";
+import { createShuffledDeck, drawCard, ensurePlayableDeck } from "./logic/deck";
 import "./styles/main.css";
 
 const SITE_NAME = "Topdeck Arena";
 const CONTACT_EMAIL = "michelepezza99@gmail.com";
 
-const STARTING_COINS = 500;
-const MIN_BET = 10;
+const STARTING_COINS = STARTING_BALANCE;
+const MIN_BET = 1;
 
 const STORAGE_KEYS = {
   bestCoins: "topdeck-arena-best-coins-static-v1",
   gamesPlayed: "topdeck-arena-games-played-static-v1",
 };
 
-const suits = [
-  { symbol: "♠", name: "Spades", color: "black" },
-  { symbol: "♥", name: "Hearts", color: "red" },
-  { symbol: "♦", name: "Diamonds", color: "red" },
-  { symbol: "♣", name: "Clubs", color: "black" },
-];
-
-const ranks = [
-  { label: "2", value: 2 },
-  { label: "3", value: 3 },
-  { label: "4", value: 4 },
-  { label: "5", value: 5 },
-  { label: "6", value: 6 },
-  { label: "7", value: 7 },
-  { label: "8", value: 8 },
-  { label: "9", value: 9 },
-  { label: "10", value: 10 },
-  { label: "J", value: 11 },
-  { label: "Q", value: 12 },
-  { label: "K", value: 13 },
-  { label: "A", value: 14 },
-];
-
-function createDeck() {
-  return suits.flatMap((suit) =>
-    ranks.map((rank) => ({
-      id: `${rank.label}-${suit.name}`,
-      rank: rank.label,
-      value: rank.value,
-      suit: suit.symbol,
-      suitName: suit.name,
-      color: suit.color,
-    }))
-  );
+function drawFromDeck(deck) {
+  return drawCard(ensurePlayableDeck(deck));
 }
 
-function drawRandomCard(excludedCard = null) {
-  const deck = createDeck();
+function formatCard(card) {
+  if (!card) return "";
 
-  const availableCards = excludedCard
-    ? deck.filter((card) => card.id !== excludedCard.id)
-    : deck;
+  return `${card.rank ?? card.label}${card.suit}`;
+}
 
-  return availableCards[Math.floor(Math.random() * availableCards.length)];
+function createSessionStats() {
+  return {
+    rounds: 0,
+    wins: 0,
+    losses: 0,
+    ties: 0,
+    peakCoins: STARTING_COINS,
+    biggestWin: 0,
+    biggestLoss: 0,
+  };
+}
+
+function createInitialRound() {
+  const drawn = drawFromDeck(createShuffledDeck());
+
+  return {
+    deck: drawn.deck,
+    dealerCard: drawn.card,
+  };
 }
 
 function TopNav({ onGoHome, onOpenPage }) {
@@ -123,6 +110,8 @@ function TopNav({ onGoHome, onOpenPage }) {
 }
 
 function Card({ card, hidden = false, label }) {
+  const rank = card?.rank ?? card?.label;
+
   return (
     <div className="card-wrapper">
       <p className="card-label">{label}</p>
@@ -133,7 +122,7 @@ function Card({ card, hidden = false, label }) {
         ) : (
           <>
             <div className="card-corner top-left">
-              <span>{card.rank}</span>
+              <span>{rank}</span>
               <span>{card.suit}</span>
             </div>
 
@@ -142,7 +131,7 @@ function Card({ card, hidden = false, label }) {
             </div>
 
             <div className="card-corner bottom-right">
-              <span>{card.rank}</span>
+              <span>{rank}</span>
               <span>{card.suit}</span>
             </div>
           </>
@@ -245,9 +234,15 @@ function EndScreen({
   roundsPlayed,
   bestCoins,
   gamesPlayed,
+  sessionStats,
   onRestart,
   onHome,
 }) {
+  const winRate =
+    sessionStats.rounds > 0
+      ? Math.round((sessionStats.wins / sessionStats.rounds) * 100)
+      : 0;
+
   return (
     <main className="app page-shell">
       <section className="end-screen">
@@ -276,6 +271,21 @@ function EndScreen({
             <div>
               <span>Games Played</span>
               <strong>{gamesPlayed}</strong>
+            </div>
+
+            <div>
+              <span>Wins</span>
+              <strong>{sessionStats.wins}</strong>
+            </div>
+
+            <div>
+              <span>Losses</span>
+              <strong>{sessionStats.losses}</strong>
+            </div>
+
+            <div>
+              <span>Win Rate</span>
+              <strong>{winRate}%</strong>
             </div>
           </div>
 
@@ -383,9 +393,12 @@ function GameScreen({
   message,
   roundResult,
   history,
+  sessionStats,
   roundNumber,
   bestCoins,
   validBet,
+  validationMessage,
+  deckCount,
   onBetChange,
   onQuickBet,
   onMaxBet,
@@ -450,7 +463,7 @@ function GameScreen({
 
           <div className="controls">
             <div className="bet-panel">
-              <label htmlFor="bet">Your Coins</label>
+              <label htmlFor="bet">Bet Amount</label>
 
               <input
                 id="bet"
@@ -506,7 +519,7 @@ function GameScreen({
 
               {!validBet && (
                 <p className="validation-text">
-                  Amount must be between {MIN_BET} and {coins} coins.
+                  {validationMessage}
                 </p>
               )}
             </div>
@@ -565,6 +578,42 @@ function GameScreen({
             </ul>
           </div>
 
+          <div className="session-card">
+            <h2>Session</h2>
+
+            <div className="session-grid">
+              <div>
+                <span>Wins</span>
+                <strong>{sessionStats.wins}</strong>
+              </div>
+
+              <div>
+                <span>Losses</span>
+                <strong>{sessionStats.losses}</strong>
+              </div>
+
+              <div>
+                <span>Ties</span>
+                <strong>{sessionStats.ties}</strong>
+              </div>
+
+              <div>
+                <span>Peak</span>
+                <strong>{sessionStats.peakCoins}</strong>
+              </div>
+
+              <div>
+                <span>Best Win</span>
+                <strong>+{sessionStats.biggestWin}</strong>
+              </div>
+
+              <div>
+                <span>Deck</span>
+                <strong>{deckCount}</strong>
+              </div>
+            </div>
+          </div>
+
           <div className="history-card">
             <h2>Recent Rounds</h2>
 
@@ -619,18 +668,23 @@ export default function App() {
   const [screen, setScreen] = useState("start");
   const [infoPage, setInfoPage] = useState(null);
 
+  const [roundState, setRoundState] = useState(() => createInitialRound());
   const [coins, setCoins] = useState(STARTING_COINS);
   const [bet, setBet] = useState(50);
-  const [dealerCard, setDealerCard] = useState(() => drawRandomCard());
   const [playerCard, setPlayerCard] = useState(null);
   const [message, setMessage] = useState(
     "Choose your coins and predict Higher or Lower."
   );
   const [roundResult, setRoundResult] = useState(null);
   const [history, setHistory] = useState([]);
+  const [sessionStats, setSessionStats] = useState(() => createSessionStats());
   const [roundNumber, setRoundNumber] = useState(1);
   const [finalCoins, setFinalCoins] = useState(STARTING_COINS);
   const [finalRounds, setFinalRounds] = useState(0);
+  const [finalStats, setFinalStats] = useState(() => createSessionStats());
+
+  const deck = roundState.deck;
+  const dealerCard = roundState.dealerCard;
 
   const [bestCoins, setBestCoins] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.bestCoins);
@@ -642,32 +696,80 @@ export default function App() {
     return saved ? Number(saved) : 0;
   });
 
-  const validBet = useMemo(() => {
-    return Number(bet) >= MIN_BET && Number(bet) <= coins;
+  const validationResult = useMemo(() => {
+    const amount = Number(bet);
+    const validation = validateBet(amount, coins, MIN_BET);
+
+    if (!validation.valid) {
+      return validation;
+    }
+
+    return {
+      valid: true,
+      error: null,
+    };
   }, [bet, coins]);
+
+  const validBet = validationResult.valid;
 
   useEffect(() => {
     document.title = SITE_NAME;
   }, []);
 
   useEffect(() => {
-    if (coins > bestCoins) {
-      setBestCoins(coins);
-      localStorage.setItem(STORAGE_KEYS.bestCoins, String(coins));
-    }
-  }, [coins, bestCoins]);
+    window.scrollTo({ top: 0, left: 0 });
+  }, [screen, infoPage]);
+
+  useEffect(() => {
+    window.render_game_to_text = () =>
+      JSON.stringify({
+        screen: infoPage ?? screen,
+        coins,
+        bet,
+        validBet,
+        roundNumber,
+        dealerCard: formatCard(dealerCard),
+        playerCard: formatCard(playerCard),
+        message,
+        roundResult,
+        sessionStats,
+        deckCount: deck.length,
+      });
+
+    window.advanceTime = () => {};
+
+    return () => {
+      delete window.render_game_to_text;
+      delete window.advanceTime;
+    };
+  }, [
+    bet,
+    coins,
+    dealerCard,
+    deck.length,
+    infoPage,
+    message,
+    playerCard,
+    roundNumber,
+    roundResult,
+    screen,
+    sessionStats,
+    validBet,
+  ]);
 
   function resetGameState() {
+    setRoundState(createInitialRound());
     setCoins(STARTING_COINS);
     setBet(50);
-    setDealerCard(drawRandomCard());
     setPlayerCard(null);
     setMessage("Choose your coins and predict Higher or Lower.");
     setRoundResult(null);
     setHistory([]);
+    setSessionStats(createSessionStats());
     setRoundNumber(1);
     setFinalCoins(STARTING_COINS);
     setFinalRounds(0);
+    setFinalStats(createSessionStats());
   }
 
   function startGame() {
@@ -682,7 +784,11 @@ export default function App() {
     setScreen("game");
   }
 
-  function finishGame(coinsAtFinish = coins, roundsAtFinish = roundNumber - 1) {
+  function finishGame(
+    coinsAtFinish = coins,
+    roundsAtFinish = roundNumber - 1,
+    statsAtFinish = sessionStats
+  ) {
     const updatedGamesPlayed = gamesPlayed + 1;
 
     setGamesPlayed(updatedGamesPlayed);
@@ -690,6 +796,7 @@ export default function App() {
 
     setFinalCoins(coinsAtFinish);
     setFinalRounds(Math.max(roundsAtFinish, 0));
+    setFinalStats(statsAtFinish);
     setInfoPage(null);
     setScreen("end");
   }
@@ -724,25 +831,24 @@ export default function App() {
     if (playerCard) return;
 
     if (!validBet) {
-      setMessage(`Your amount must be between ${MIN_BET} and ${coins} coins.`);
+      setMessage(validationResult.error);
       setRoundResult("warning");
       return;
     }
 
-    const drawnCard = drawRandomCard(dealerCard);
+    const drawn = drawFromDeck(deck);
+    const drawnCard = drawn.card;
+    const outcome = resolveOutcome(dealerCard, drawnCard, choice);
 
     let result;
     let coinsChange;
     let resultMessage;
 
-    if (drawnCard.value === dealerCard.value) {
+    if (outcome === OUTCOMES.TIE) {
       result = "Tie";
       coinsChange = 0;
       resultMessage = "Tie. Your coins have been returned.";
-    } else if (
-      (choice === "higher" && drawnCard.value > dealerCard.value) ||
-      (choice === "lower" && drawnCard.value < dealerCard.value)
-    ) {
+    } else if (outcome === OUTCOMES.WIN) {
       result = "Win";
       coinsChange = Number(bet);
       resultMessage = `You won ${bet} virtual coins.`;
@@ -753,19 +859,38 @@ export default function App() {
     }
 
     const updatedCoins = Math.max(coins + coinsChange, 0);
+    const updatedStats = {
+      rounds: sessionStats.rounds + 1,
+      wins: sessionStats.wins + (outcome === OUTCOMES.WIN ? 1 : 0),
+      losses: sessionStats.losses + (outcome === OUTCOMES.LOSS ? 1 : 0),
+      ties: sessionStats.ties + (outcome === OUTCOMES.TIE ? 1 : 0),
+      peakCoins: Math.max(sessionStats.peakCoins, updatedCoins),
+      biggestWin: Math.max(sessionStats.biggestWin, coinsChange),
+      biggestLoss: Math.min(sessionStats.biggestLoss, coinsChange),
+    };
 
     setPlayerCard(drawnCard);
+    setRoundState((current) => ({
+      ...current,
+      deck: drawn.deck,
+    }));
     setCoins(updatedCoins);
+    setSessionStats(updatedStats);
     setRoundResult(result.toLowerCase());
     setMessage(resultMessage);
+
+    if (updatedCoins > bestCoins) {
+      setBestCoins(updatedCoins);
+      localStorage.setItem(STORAGE_KEYS.bestCoins, String(updatedCoins));
+    }
 
     setHistory((previousHistory) => [
       {
         round: roundNumber,
         choice: choice === "higher" ? "Higher" : "Lower",
         bet,
-        dealer: `${dealerCard.rank}${dealerCard.suit}`,
-        player: `${drawnCard.rank}${drawnCard.suit}`,
+        dealer: formatCard(dealerCard),
+        player: formatCard(drawnCard),
         result,
         change: coinsChange,
       },
@@ -774,13 +899,18 @@ export default function App() {
 
     if (updatedCoins <= 0) {
       setTimeout(() => {
-        finishGame(0, roundNumber);
+        finishGame(0, roundNumber, updatedStats);
       }, 900);
     }
   }
 
   function nextRound() {
-    setDealerCard(drawRandomCard());
+    const drawn = drawFromDeck(deck);
+
+    setRoundState({
+      deck: drawn.deck,
+      dealerCard: drawn.card,
+    });
     setPlayerCard(null);
     setRoundResult(null);
     setRoundNumber((current) => current + 1);
@@ -812,6 +942,7 @@ export default function App() {
           roundsPlayed={finalRounds}
           bestCoins={bestCoins}
           gamesPlayed={gamesPlayed}
+          sessionStats={finalStats}
           onRestart={restartGame}
           onHome={goHome}
         />
@@ -824,16 +955,19 @@ export default function App() {
           message={message}
           roundResult={roundResult}
           history={history}
+          sessionStats={sessionStats}
           roundNumber={roundNumber}
           bestCoins={bestCoins}
           validBet={validBet}
+          validationMessage={validationResult.error}
+          deckCount={deck.length}
           onBetChange={handleBetChange}
           onQuickBet={quickBet}
           onMaxBet={maxBet}
           onPlayRound={playRound}
           onNextRound={nextRound}
           onRestart={restartGame}
-          onFinish={() => finishGame(coins, roundNumber - 1)}
+          onFinish={() => finishGame(coins, sessionStats.rounds, sessionStats)}
           onResetBest={resetBestScore}
         />
       )}
